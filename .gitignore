@@ -1,0 +1,9 @@
+src/__pycache__
+experiments/__pycache__
+
+*.csv
+*.txt
+*.log
+*.pkl
+
+experiments/sims.ipynb
