@@ -3,7 +3,7 @@ import argparse
 import time
 import sys
 
-sys.path.append("/home/luke/SBI")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 
 import dill
@@ -178,7 +178,6 @@ def main(args):
     filename = os.path.join(
         current_dir, f"SIR_experiments/SIR_{args.pop_size}_pop" + label
     )
-    np.random.seed(123456)
     with Logger(filename + ".log") as logger:
 
         logger.write(
@@ -247,7 +246,8 @@ Experiment details:
             return out
 
         R0s = 10 * np.random.rand(args.init_samples)
-        gamma_invs = truncated_gamma(10, 0.5, 1.0, args.init_samples)
+        # gamma_invs = truncated_gamma(10, 0.5, 1.0, args.init_samples)
+        gamma_invs = np.random.gamma(10, 0.5, size=args.init_samples)
         dataset = simulate(R0s, gamma_invs)
         model = create_likelihood_model(args)
         snl, snl_config = create_snl(args, model, obs, numpyro_SIR, simulate)

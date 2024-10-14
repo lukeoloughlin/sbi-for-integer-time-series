@@ -3,7 +3,7 @@ import argparse
 import time
 import sys
 
-sys.path.append("/home/luke/SBI")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 
 import dill
@@ -60,19 +60,10 @@ class TruncatedGamma(dist.Distribution):
 
     def sample(self, key, sample_shape=()):
         pass
-        # shape = sample_shape + self.batch_shape + self.event_shape
-        # return jax.random.gamma(key, self.concentration, shape=shape) / self.rate
 
     @dist.util.validate_sample
     def log_prob(self, value):
-        # normalize_term = gammaln(self.concentration) - self.concentration * jnp.log(
-        #    self.rate
-        # )
-        return (
-            (self.concentration - 1) * jnp.log(value)
-            - self.rate * value
-            # - normalize_term
-        )
+        return (self.concentration - 1) * jnp.log(value) - self.rate * value
 
 
 def logit(p):
@@ -217,7 +208,6 @@ def main(args):
     filename = os.path.join(
         current_dir, f"SEIAR_experiments/SEIAR_{args.pop_size}_obs" + label
     )
-    np.random.seed(12345)
     with Logger(filename + ".log") as logger:
         logger.write(
             f"""        

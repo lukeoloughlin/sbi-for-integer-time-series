@@ -167,109 +167,6 @@ def SIIR(N, beta, gamma, initial_infected, time_run, remove_trivial=False):
 
 
 @numba.jit(nopython=True, fastmath=True)
-def SIIIR(N, beta, gamma, initial_infected, time_run, remove_trivial=False):
-    nsims = beta.shape[0]
-    Z1_PO = np.zeros((nsims, time_run, 1))  # Infectious stage 1
-    Z2_PO = np.zeros((nsims, time_run, 1))  # Infectious stage 2
-    Z3_PO = np.zeros((nsims, time_run, 1))  # Infectious stage 3
-    Z4_PO = np.zeros((nsims, time_run, 1))
-
-    Z1_PO[:, 0, 0] = initial_infected
-
-    for i in range(nsims):
-        beta_ = beta[i]
-        gamma_ = gamma[i]
-        N_ = N[i]
-
-        Z1 = initial_infected
-        Z2 = 0
-        Z3 = 0
-        Z4 = 0
-
-        cum_time = 0
-        while True:
-            rates = np.array(
-                [
-                    beta_ * (N_ - Z1) * (Z1 - Z4) / (N_ - initial_infected),
-                    3 * gamma_ * (Z1 - Z2),
-                    3 * gamma_ * (Z2 - Z3),
-                    3 * gamma_ * (Z3 - Z4),
-                ]
-            )
-            total_rate = np.sum(rates)
-            t_new = np.random.exponential(1 / total_rate)
-            time_steps_traversed = int(np.floor(cum_time + t_new) - np.floor(cum_time))
-            if time_steps_traversed > 0:
-                Z1_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z1
-                Z2_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z2
-                Z3_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z3
-                Z4_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z4
-
-            cum_time += t_new
-            if cum_time > time_run:
-                break
-
-            probs = rates / total_rate
-            cdf = np.cumsum(probs)
-            u = np.random.rand()
-
-            if u < cdf[0]:
-                Z1 += 1
-            elif u < cdf[1]:
-                Z2 += 1
-            elif u < cdf[2]:
-                Z3 += 1
-            else:
-                Z4 += 1
-
-            if (Z1 - Z4) == 0:
-                if remove_trivial:
-                    if Z1 == initial_infected:
-                        Z1_PO[i, :, 0] = 0
-                        Z2_PO[i, :, 0] = 0
-                        Z3_PO[i, :, 0] = 0
-                        Z4_PO[i, :, 0] = 0
-
-                        Z1_PO[i, 0, 0] = initial_infected
-
-                        Z1 = initial_infected
-                        Z2 = Z3 = Z4 = 0
-
-                        cum_time = 0
-                        continue
-                Z1_PO[i, int(np.ceil(cum_time)) :, 0] = Z1
-                Z2_PO[i, int(np.ceil(cum_time)) :, 0] = Z2
-                Z3_PO[i, int(np.ceil(cum_time)) :, 0] = Z3
-                Z4_PO[i, int(np.ceil(cum_time)) :, 0] = Z4
-                break
-    return Z1_PO, Z2_PO, Z3_PO, Z4_PO
-
-
-@numba.jit(nopython=True, fastmath=True)
 def SI10R(N, beta, gamma, initial_infected, time_run, remove_trivial=False):
     nsims = beta.shape[0]
     Z1_PO = np.zeros((nsims, time_run, 1))  # Infectious stage 1
@@ -505,157 +402,6 @@ def SIIR_final_size(N, beta, gamma, initial_infected, max_len=100):
 
 
 @numba.jit(nopython=True, fastmath=True)
-def SIIIR_final_size(N, beta, gamma, initial_infected, max_len=100):
-    Z1_PO, Z2_PO, Z3_PO, Z4_PO = SIIIR(
-        N, beta, gamma, initial_infected, time_run=max_len
-    )
-    I = Z1_PO - Z4_PO
-    if np.all(I[:, -1, 0] == 0):
-        longest_obs = 1
-        for i in range(I.shape[0]):
-            die_out = np.where(I[i, :, 0] == 0)[0][0]
-            if die_out > longest_obs:
-                longest_obs = die_out
-    else:
-        longest_obs = max_len
-    return (
-        Z1_PO[:, : (longest_obs + 1), :],
-        Z2_PO[:, : (longest_obs + 1), :],
-        Z3_PO[:, : (longest_obs + 1), :],
-        Z4_PO[:, : (longest_obs + 1), :],
-    )
-
-
-# @numba.jit(nopython=True, fastmath=True)
-def SI10R_final_size(N, beta, gamma, initial_infected, max_len=100):
-    Z_POs = SI10R(N, beta, gamma, initial_infected, time_run=max_len)
-    I = Z_POs[0] - Z_POs[-1]
-    if np.all(I[:, -1, 0] == 0):
-        longest_obs = 1
-        for i in range(I.shape[0]):
-            die_out = np.where(I[i, :, 0] == 0)[0][0]
-            if die_out > longest_obs:
-                longest_obs = die_out
-    else:
-        longest_obs = max_len
-    return [Z[:, : (longest_obs + 1), :] for Z in Z_POs]
-
-
-@numba.jit(nopython=True, fastmath=True)
-def SEIR(N, beta, sigma, gamma, initial_infected, time_run, remove_trivial=False):
-    nsims = beta.shape[0]
-    Z1_PO = np.zeros((nsims, time_run, 1))
-    Z2_PO = np.zeros((nsims, time_run, 1))
-    Z3_PO = np.zeros((nsims, time_run, 1))
-
-    Z1_PO[:, 0, 0] = initial_infected
-    Z2_PO[:, 0, 0] = initial_infected
-
-    for i in range(nsims):
-        beta_ = beta[i]
-        sigma_ = sigma[i]
-        gamma_ = gamma[i]
-        N_ = N[i]
-
-        Z1 = initial_infected
-        Z2 = initial_infected
-        Z3 = 0
-
-        cum_time = 0
-        while True:
-            rates = np.array(
-                [
-                    beta_ * (N_ - Z1) * (Z2 - Z3) / (N_ - initial_infected),
-                    sigma_ * (Z1 - Z2),
-                    gamma_ * (Z2 - Z3),
-                ]
-            )
-            total_rate = np.sum(rates)
-            t_new = np.random.exponential(1 / total_rate)
-            time_steps_traversed = int(np.floor(cum_time + t_new) - np.floor(cum_time))
-            if time_steps_traversed > 0:
-                Z1_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z1
-                Z2_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z2
-                Z3_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Z3
-
-            cum_time += t_new
-            if cum_time > time_run:
-                break
-
-            probs = rates / total_rate
-            cdf = np.cumsum(probs)
-            u = np.random.rand()
-
-            if u < cdf[0]:
-                Z1 += 1
-            elif u < cdf[1]:
-                Z2 += 1
-            else:
-                Z3 += 1
-
-            if (Z1 - Z3) == 0:
-                if remove_trivial:
-                    if Z1 == initial_infected:
-                        Z1_PO[i, :, 0] = 0
-                        Z2_PO[i, :, 0] = 0
-                        Z3_PO[i, :, 0] = 0
-
-                        Z1_PO[i, 0, 0] = initial_infected
-                        Z2_PO[i, 0, 0] = initial_infected
-
-                        Z1 = Z2 = initial_infected
-                        Z3 = 0
-
-                        cum_time = 0
-                        continue
-                Z1_PO[i, int(np.ceil(cum_time)) :, 0] = Z1
-                Z2_PO[i, int(np.ceil(cum_time)) :, 0] = Z2
-                Z3_PO[i, int(np.ceil(cum_time)) :, 0] = Z3
-                break
-    return Z1_PO, Z2_PO, Z3_PO
-
-
-@numba.jit(nopython=True, fastmath=True)
-def SEIR_final_size(N, beta, sigma, gamma, initial_infected, max_len=100):
-    Z1_PO, Z2_PO, Z3_PO = SEIR(
-        N, beta, sigma, gamma, initial_infected, time_run=max_len
-    )
-
-    EpI = Z1_PO - Z3_PO
-    if np.all(EpI[:, -1, 0] == 0):
-        longest_obs = 1
-        for i in range(EpI.shape[0]):
-            die_out = np.where(EpI[i, :, 0] == 0)[0][0]
-            if die_out > longest_obs:
-                longest_obs = die_out
-    else:
-        longest_obs = max_len
-    return (
-        Z1_PO[:, : (longest_obs + 1), :],
-        Z2_PO[:, : (longest_obs + 1), :],
-        Z3_PO[:, : (longest_obs + 1), :],
-    )
-
-
-@numba.jit(nopython=True, fastmath=True)
 def SEIAR_init_state(N, beta_p, beta_s, sigma, gamma, q, initial_infected):
     state = np.zeros(5)
     state[0] = 1
@@ -801,58 +547,70 @@ def SEIAR(N, beta_p, beta_s, sigma, gamma, q, initial_infected, time_run):
 
 
 @numba.jit(nopython=True, fastmath=True)
-def LV(
-    alpha,
-    beta,
-    gamma,
-    delta,
-    initial_predator,
+def PP(
+    b,
+    d1,
+    d2,
+    p1,
+    p2,
+    carrying_capacity,
+    initial_pred,
     initial_prey,
     time_run,
-    max_num_prey=10000,
 ):
-    nsims = alpha.shape[0]
-    X_PO = np.zeros((nsims, time_run, 1))
-    Y_PO = np.zeros((nsims, time_run, 1))
+    nsims = b.shape[0]
+    pred_PO = np.zeros((nsims, time_run, 1))
+    prey_PO = np.zeros((nsims, time_run, 1))
 
     for i in range(nsims):
-        alpha_ = alpha[i]
-        beta_ = beta[i]
-        gamma_ = gamma[i]
-        delta_ = delta[i]
-        X_PO[i, 0, 0] = initial_prey[i]
-        Y_PO[i, 0, 0] = initial_predator[i]
-        stop_flag = False
+        b_ = b[i]
+        d1_ = d1[i]
+        d2_ = d2[i]
+        p1_ = p1[i]
+        p2_ = p2[i]
+        pred_PO[i, 0, 0] = initial_pred[i]
+        prey_PO[i, 0, 0] = initial_prey[i]
+        # stop_flag = False
 
-        X, Y = initial_prey[i], initial_predator[i]
+        pred, prey = initial_pred[i], initial_prey[i]
         cum_time = 0
         while True:
-            rates = np.array([alpha_ * X, beta_ * X * Y, delta_ * X * Y, gamma_ * Y])
+            r1 = d1_ * pred  # (pred,prey) -> (pred-1,prey)
+            r2 = (
+                2 * b_ * prey * (carrying_capacity - pred - prey) / carrying_capacity
+            )  # (pred,prey) -> (pred,prey+1)
+            r3 = (
+                2 * p2_ * pred * prey / carrying_capacity + d2_ * prey
+            )  # (pred,prey) -> (pred,prey-1)
+            r4 = (
+                2 * p1_ * pred * prey / carrying_capacity
+            )  # (pred,prey) -> (pred+1,prey-1)
+            rates = np.array([r1, r2, r3, r4])
             total_rate = np.sum(rates)
             t_new = np.random.exponential(1 / total_rate)
             # Number of integer time steps traversed
             time_steps_traversed = int(np.floor(cum_time + t_new) - np.floor(cum_time))
             if time_steps_traversed > 0:
                 # Record partial observations if time step is traversed
-                X_PO[
+                pred_PO[
                     i,
                     int(np.floor(cum_time) + 1) : int(
                         np.floor(cum_time) + time_steps_traversed + 1
                     ),
                     0,
-                ] = X
-                Y_PO[
+                ] = pred
+                prey_PO[
                     i,
                     int(np.floor(cum_time) + 1) : int(
                         np.floor(cum_time) + time_steps_traversed + 1
                     ),
                     0,
-                ] = Y
+                ] = prey
 
-                if stop_flag:
-                    X_PO[i, int(np.ceil(cum_time) + 1) :, 0] = X
-                    Y_PO[i, int(np.ceil(cum_time) + 1) :, 0] = 0.0
-                    break
+                # if stop_flag:
+                #    X_PO[i, int(np.ceil(cum_time) + 1) :, 0] = X
+                #    Y_PO[i, int(np.ceil(cum_time) + 1) :, 0] = 0.0
+                #    break
 
             cum_time = cum_time + t_new
             if cum_time > time_run:
@@ -864,177 +622,23 @@ def LV(
             u = np.random.rand()
 
             if u < cdf[0]:
-                X += 1
+                pred -= 1
             elif u < cdf[1]:
-                X -= 1
+                prey += 1
             elif u < cdf[2]:
-                Y += 1
+                prey -= 1
             else:
-                Y -= 1
+                pred += 1
+                prey -= 1
 
-            if (X + Y) == 0:
-                X_PO[i, int(np.ceil(cum_time)) :, 0] = X
-                Y_PO[i, int(np.ceil(cum_time)) :, 0] = Y
+            # Extinction, all rates now 0
+            if (pred + prey) == 0:
+                pred_PO[i, int(np.ceil(cum_time)) :, 0] = pred
+                prey_PO[i, int(np.ceil(cum_time)) :, 0] = prey
                 break
 
-            if Y == 0 and X > max_num_prey:
-                # Otherwise exponential growth occurs and simulations take forever
-                stop_flag = True
+            # if Y == 0 and X > max_num_prey:
+            # Otherwise exponential growth occurs and simulations take forever
+            #    stop_flag = True
 
-    return X_PO, Y_PO
-
-
-@numba.jit(nopython=True, fastmath=True)
-def LV_immigration(
-    alpha,
-    beta,
-    gamma,
-    delta,
-    prey_immigration,
-    pred_immigration,
-    initial_predator,
-    initial_prey,
-    predator_cc,
-    prey_cc,
-    time_run,
-):
-    nsims = alpha.shape[0]
-    X_PO = np.zeros((nsims, time_run, 1))
-    Y_PO = np.zeros((nsims, time_run, 1))
-
-    for i in range(nsims):
-        alpha_ = alpha[i]
-        beta_ = beta[i]
-        gamma_ = gamma[i]
-        delta_ = delta[i]
-        prey_immigration_ = prey_immigration[i]
-        pred_immigration_ = pred_immigration[i]
-        X_PO[i, 0, 0] = initial_prey[i]
-        Y_PO[i, 0, 0] = initial_predator[i]
-
-        X, Y = initial_prey[i], initial_predator[i]
-        cum_time = 0
-        while True:
-            rates = np.array(
-                [
-                    (alpha_ * X + prey_immigration_) * (1 - X / prey_cc),
-                    beta_ * X * Y,
-                    (delta_ * X * Y + pred_immigration_) * (1 - Y / predator_cc),
-                    gamma_ * Y,
-                ]
-            )
-            total_rate = np.sum(rates)
-            t_new = np.random.exponential(1 / total_rate)
-            # Number of integer time steps traversed
-            time_steps_traversed = int(np.floor(cum_time + t_new) - np.floor(cum_time))
-            if time_steps_traversed > 0:
-                # Record partial observations if time step is traversed
-                X_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = X
-                Y_PO[
-                    i,
-                    int(np.floor(cum_time) + 1) : int(
-                        np.floor(cum_time) + time_steps_traversed + 1
-                    ),
-                    0,
-                ] = Y
-
-            cum_time = cum_time + t_new
-            if cum_time > time_run:
-                # Break the Gillespie algorithm
-                break
-
-            probs = rates / total_rate
-            cdf = np.cumsum(probs)
-            u = np.random.rand()
-
-            if u < cdf[0]:
-                X += 1
-            elif u < cdf[1]:
-                X -= 1
-            elif u < cdf[2]:
-                Y += 1
-            else:
-                Y -= 1
-
-    return X_PO, Y_PO
-
-
-@numba.jit(nopython=True, fastmath=True)
-def MG1(theta1, theta2, theta3, time_run):
-    nsims = theta1.shape[0]
-    X_PO = np.zeros((nsims, time_run, 1))
-
-    for i in range(nsims):
-        theta1_ = theta1[i]
-        theta2_ = theta2[i]
-        theta3_ = theta3[i]
-        X = 0
-
-        passed_time = 0
-        while True:
-            if X == 0:
-                arrival_time = np.random.exponential(1 / theta3_)
-                time_steps_traversed = int(
-                    np.floor(passed_time + arrival_time) - np.floor(passed_time)
-                )
-                if time_steps_traversed > 0:
-                    # Record partial observations if time step is traversed
-                    X_PO[
-                        i,
-                        int(np.floor(passed_time) + 1) : int(
-                            np.floor(passed_time) + time_steps_traversed + 1
-                        ),
-                        0,
-                    ] = X
-                passed_time += arrival_time
-                if passed_time > time_run:
-                    break
-                X += 1
-            else:
-                service_time = theta1_ + (theta2_ - theta1_) * np.random.rand()
-                time_left = service_time
-                while True:
-                    arrival_time = np.random.exponential(1 / theta3_)
-                    if arrival_time < time_left:
-                        time_steps_traversed = int(
-                            np.floor(passed_time + arrival_time) - np.floor(passed_time)
-                        )
-                        if time_steps_traversed > 0:
-                            # Record partial observations if time step is traversed
-                            X_PO[
-                                i,
-                                int(np.floor(passed_time) + 1) : int(
-                                    np.floor(passed_time) + time_steps_traversed + 1
-                                ),
-                                0,
-                            ] = X
-                        passed_time += arrival_time
-                        if passed_time > time_run:
-                            break
-                        time_left -= arrival_time
-                        X += 1
-                    else:
-                        break
-                time_steps_traversed = int(
-                    np.floor(passed_time + time_left) - np.floor(passed_time)
-                )
-                if time_steps_traversed > 0:
-                    # Record partial observations if time step is traversed
-                    X_PO[
-                        i,
-                        int(np.floor(passed_time) + 1) : int(
-                            np.floor(passed_time) + time_steps_traversed + 1
-                        ),
-                        0,
-                    ] = X
-                X -= 1
-                passed_time += time_left
-                if passed_time > time_run:
-                    break
-    return X_PO
+    return pred_PO, prey_PO

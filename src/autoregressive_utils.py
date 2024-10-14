@@ -85,7 +85,6 @@ class ParamConfig(Config):
     encode_dim: Optional[int] = None
     hidden_dim: Optional[int] = None
     activation: Callable = nn.relu
-    # scale_params_by: Optional[Array] = None
 
 
 class ContextEncoder(nn.Module):

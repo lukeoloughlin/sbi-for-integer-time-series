@@ -1,5 +1,6 @@
 src/__pycache__
 experiments/__pycache__
+experiments/PP_experiments
 
 *.csv
 *.txt
@@ -7,3 +8,5 @@ experiments/__pycache__
 *.pkl
 
 experiments/sims.ipynb
+experiments/PP.ipynb
+experiments/SEIAR.ipynb

@@ -187,7 +187,6 @@ class CausalCNN(nn.Module):
     residual_blocks: Number of residual blocks.
     kernel_shape: length of convolution kernel.
     out_param_dimension: Number of output channels.
-    num_events: Number of inputs which are binary.
     activation: Activation function for hidden layers.
     epidemic: True if running outbreak experiments.
     events_pos: If binary events are input to the network, then this specifies how they are ordered in the input.
@@ -230,7 +229,6 @@ class DiscreteAutoregressiveModel(nn.Module):
     that the masking can be effected by y_{1:n}, and the context object holding (theta, mask, support). 
     epidemic: True if running outbreak experiments. Handles the additional output channel in the CNN and implements appropriate reshifting/rescaling
     of logistic shift and scale params.
-    events_pos: Position that indicators should come in input sequence. 
     rescale_dmol_params: If True and y_{1:n} -> y_{1:n} / C before inputting to the CNN, then the shifts (before adding y_{i-1}) and scales are
     multiplied by C.
     """
