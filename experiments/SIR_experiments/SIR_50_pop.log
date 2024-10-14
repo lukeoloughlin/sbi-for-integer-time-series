@@ -1,0 +1,87 @@
+ 
+Experiment details:
+    kernel length: 5
+    hidden channels: 64
+    residual blocks: 2
+    parameter encoding dimension: 12
+    parameter encoder hidden dimension: 64
+    number of mixture components: 5
+    learning rate: 0.0003
+    weight decay: 1e-05
+    simulation budget: 60000
+    number of mcmc chains: 1
+    early stopping threshold: 30
+    prior samples: 10000
+                        
+        ##########
+Round 1:
+##########
+Training likelihood model with a dataset size of 9000. Finished in 35.8512 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 20.9289 seconds.
+Finsihed running round 1 of SNL in 56.9255 seconds.
+##########
+Round 2:
+##########
+Simulating 5100 samples from simulator. Finished in 0.4116 seconds.
+Training likelihood model with a dataset size of 13590. Finished in 36.9666 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 17.2662 seconds.
+Finsihed running round 2 of SNL in 54.6459 seconds.
+##########
+Round 3:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1352 seconds.
+Training likelihood model with a dataset size of 18180. Finished in 14.7718 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 17.8632 seconds.
+Finsihed running round 3 of SNL in 32.7722 seconds.
+##########
+Round 4:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1337 seconds.
+Training likelihood model with a dataset size of 22770. Finished in 14.9691 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 18.1443 seconds.
+Finsihed running round 4 of SNL in 33.2497 seconds.
+##########
+Round 5:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1389 seconds.
+Training likelihood model with a dataset size of 27360. Finished in 26.0946 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 16.9368 seconds.
+Finsihed running round 5 of SNL in 43.1739 seconds.
+##########
+Round 6:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1374 seconds.
+Training likelihood model with a dataset size of 31950. Finished in 20.2629 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 18.3900 seconds.
+Finsihed running round 6 of SNL in 38.7947 seconds.
+##########
+Round 7:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1375 seconds.
+Training likelihood model with a dataset size of 36540. Finished in 21.9250 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 18.2405 seconds.
+Finsihed running round 7 of SNL in 40.3073 seconds.
+##########
+Round 8:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1448 seconds.
+Training likelihood model with a dataset size of 41130. Finished in 15.1747 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 19.7011 seconds.
+Finsihed running round 8 of SNL in 35.0257 seconds.
+##########
+Round 9:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1380 seconds.
+Training likelihood model with a dataset size of 45720. Finished in 25.6031 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 18.5273 seconds.
+Finsihed running round 9 of SNL in 44.2737 seconds.
+##########
+Round 10:
+##########
+Simulating 5100 samples from simulator. Finished in 0.1390 seconds.
+Training likelihood model with a dataset size of 50310. Finished in 25.7662 seconds.
+Sampling 5100 posterior samples with MCMC over 1 chains. Finished sampling in 19.7456 seconds.
+Finsihed running round 10 of SNL in 45.6574 seconds.
+
+
+Total run time: 424.8302 seconds.

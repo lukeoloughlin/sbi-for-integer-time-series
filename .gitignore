@@ -2,10 +2,10 @@ src/__pycache__
 experiments/__pycache__
 experiments/PP_experiments
 
-*.csv
+#*.csv
 *.txt
-*.log
-*.pkl
+#*.log
+#*.pkl
 
 experiments/sims.ipynb
 experiments/PP.ipynb
